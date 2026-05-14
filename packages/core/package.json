@@ -1,0 +1,35 @@
+{
+  "name": "@netweave/core",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "AI-friendly, event-driven gameplay runtime with snapshots, deterministic rules, and dynamic bindings.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shixiangxi0/Cobweb.git",
+    "directory": "packages/core"
+  },
+  "keywords": [
+    "game-engine",
+    "event-driven",
+    "state-machine",
+    "lua",
+    "gameplay",
+    "deterministic"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "wasmoon": "^1.16.0"
+  }
+}

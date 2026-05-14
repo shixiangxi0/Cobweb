@@ -1,0 +1,39 @@
+{
+  "name": "cobweb",
+  "version": "1.0.0",
+  "type": "module",
+  "license": "MIT",
+  "main": "packages/core/src/Engine.js",
+  "exports": {
+    ".": "./packages/core/src/Engine.js"
+  },
+  "files": [
+    "packages/core/",
+    "games/sts/",
+    "games/balatro/",
+    "README.md"
+  ],
+  "scripts": {
+    "start": "tsx clients/ink-cli/cli.js",
+    "sts": "tsx clients/ink-cli/cli.js",
+    "json": "tsx clients/ink-cli/cli.js json",
+    "sts:events": "tsx games/sts/tools/dev-events.js",
+    "phaser": "vite --config vite.phaser.config.js",
+    "test": "vitest run"
+  },
+  "bin": {
+    "cobweb": "./clients/ink-cli/cli.js"
+  },
+  "dependencies": {
+    "archy": "^1.0.0",
+    "ink": "^6.8.0",
+    "react": "^19.2.4",
+    "wasmoon": "^1.16.0"
+  },
+  "devDependencies": {
+    "phaser": "^3.90.0",
+    "tsx": "^4.21.0",
+    "vite": "^8.0.8",
+    "vitest": "^4.0.18"
+  }
+}

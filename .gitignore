@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-phaser/
+*.tgz
+
+# Logs
+*.log
+logs/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+*.swp
+*.swo
+
+# Temporary / AI
+.tmp-*
+*.tmp
+*.test-*
+.claude/*
+.tmp-*/
+
+# Environment
+.env
+.env.*
+
+# Runtime data
+cobweb-saves.json
+
+# Coverage
+coverage/
+
+# Private game module
+games/balatro/
