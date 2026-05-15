@@ -61,7 +61,7 @@ Continuous games raise a deeper question: ACT combo windows, parry frames, real-
 
 This requires a new concept: **Temporal Causal Sovereignty**.
 
-**Temporal Causal Sovereignty is the complete autonomy over local temporary states that Local Causality holds within a time window.** It allows the local world to continuously read and write temporary states, execute frame-level rules, and run physics simulation within this window. parry frames and combo windows are internal states of Local Causality; they operate under the jurisdiction of Temporal Causal Sovereignty, and should not belong to rendering components—if placed in rendering components, interruption would trigger race conditions. They must be managed through layered governance so that interruption and revocation are merely clean local state resets.
+**Temporal Causal Sovereignty is the complete autonomy over local temporary states that Local Causality holds within a time window.** It allows Local Causality to continuously read and write temporary states, execute frame-level rules, and run physics simulation within this window. parry frames and combo windows are internal states of Local Causality; they operate under the jurisdiction of Temporal Causal Sovereignty, and should not belong to rendering components—if placed in rendering components, interruption would trigger race conditions. They must be managed through layered governance so that interruption and revocation are merely clean local state resets.
 
 Temporal Causal Sovereignty has three core properties:
 

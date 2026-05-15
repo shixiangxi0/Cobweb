@@ -65,6 +65,7 @@ State.emit('action:perform', { ... })      // Event causality drives rendering
 | Document | Why Read |
 |----------|----------|
 | **[📖 Dual-World Theory](docs/Dual-World-Theory.md)** | **Core architectural philosophy**. A complete derivation from "Two Kinds of Causality" through Three Layers of Sovereignty, Rendering Component Autonomy, Temporal Causal Sovereignty, and Deterministic Structure—the root of everything in Cobweb. |
+| **[🌉 Engineering Mapping: Modern Architectural Explanation](docs/工程映射：双世界理论的现代架构解释.md)** | **Developer paradigm shift**. Uses Rust's borrow checker, CQRS, and frontend state management as classical paradigms to answer how to map the theory to actual code. |
 
 ---
 
@@ -93,19 +94,22 @@ The boundary of responsibilities between the two worlds can be judged by a singl
 
 ### Sovereignty Relationship
 
-| World | Sovereignty | Responsibility |
-|-------|-------------|----------------|
-| 🧠 **Logic World** | Causal Sovereignty | All states affecting future deduction can only be modified by event-driven means |
-| 🎨 **Presentation World** | Perceptual Sovereignty | How to present, animation timing, and transition effects are autonomously decided by rendering components |
+Based on the nature of causality, the system's power is naturally divided into a strict three-layer structure:
+
+| Layer | Sovereignty | Responsibility & Features |
+|-------|-------------|---------------------------|
+| 🌳 **World Causality Tree** | Ultimate Causal Sovereignty | Maintains permanent facts across scene boundaries, never participates in local rule calculations, and possesses absolute preemption power over lower layers. |
+| 🛡️ **Local Causality** | Delegated Sovereignty | A temporary delegate for the current scene. Responsible for all battle state and event deductions. Event flow is absolutely serial. |
+| 🎨 **Presentation Runtime** | Perceptual Sovereignty | A pure rendering component tree. Maps discrete causality into parallel, continuous, multi-track sensory experiences. As it holds no causal facts, interrupting or discarding it carries zero risk. |
 
 ### Architecture Diagram
 
 ```mermaid
 graph TD
     A[World Causality Tree<br/>Persistence Layer · Cross-scene Shared]
-    A -->|Grants Local Causal Sovereignty| B[Local Causality / Scene<br/>Local Rules + Local State]
+    A -->|Grants Delegated Sovereignty| B[Local Causality / Scene<br/>Local Rules + Local State]
     B -->|Writes Key Events Back| A
-    B -->|Produces Logic Primitives| C[Presentation World / Rendering Component Tree<br/>Declarative State Machine · Component Autonomy]
+    B -->|Produces Logic Primitives| C[Presentation Runtime / Rendering Component Tree<br/>Declarative State Machine · Component Autonomy]
     C -->|Reports Key Events| B
     C -->|Reads Local Environment| B
 ```
@@ -113,8 +117,8 @@ graph TD
 **Three-Layer Relationship:**
 
 - **World Causality Tree** — Persistence layer, shared across scenes. Read at startup, written back at key events, synchronized on exit.
-- **Local Causality** — Can be understood as a Scene, locally autonomous, corresponding to a rendering component tree.
-- **Presentation World** — Visualization of local causality, composed of a declarative rendering component tree. Each rendering component autonomously manages state, animation, and interaction, and can directly read and write local temporary state without affecting future causal deduction.
+- **Local Causality** — Can be understood as a Scene, a temporary delegate of causal sovereignty, corresponding to a rendering component tree.
+- **Presentation World** — Visualization of local causality, composed of a declarative rendering component tree. Each rendering component autonomously manages state, animation, and interaction.
 
 ---
 
