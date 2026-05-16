@@ -6,11 +6,11 @@
 
 There exist two fundamentally different kinds of causality in games.
 
-The first is **Game Causality**. HP reduction, equipment acquisition, level progression—these events alter the future of the game. They are permanent writes to the world state. They are discrete, instantaneous, and irreversible.
+The first is **Game Causality**. HP reduction, equipment acquisition, level progression—these events alter the future of the game. They are permanent writes to the world state. They are discrete, instantaneous, irreversible, and **absolutely serial** (similar to the single-threaded event-driven model of frontend JavaScript, where "simultaneity" in the physical world is forcibly queued).
 
-The second is **Perceptual Causality**. Sword-swing animations, chase movements, particle effects—these state evolutions do not affect any future game deduction. They serve the present experience and vanish when ended.
+The second is **Perceptual Causality**. Sword-swing animations, chase movements, particle effects—these state evolutions do not affect any future game deduction. They serve the present experience and vanish when ended. Unlike the "absolute seriality" of Game Causality, Perceptual Causality is **continuous and parallel**. Because they hold and produce no causal facts, there is naturally no state-write contention. Therefore, a scene can have countless animations, sound effects, and particle systems truly functioning "simultaneously." Discrete events forcibly queued within the same frame in the logic engine can elegantly unfold in the presentation layer as multi-track parallel visual presentations.
 
-These two causalities operate on different axes and are orthogonal in nature. The entirety of Dual-World Theory proceeds from this distinction.
+These two causalities operate on different axes (logic is discrete/serial, presentation is continuous/parallel) and are orthogonal in nature. The entirety of Dual-World Theory proceeds from this distinction.
 
 ---
 
@@ -67,13 +67,13 @@ Temporal Causal Sovereignty has three core properties:
 
 - **Time-bounded**: Sovereignty exists within a time window; when the window closes, sovereignty naturally expires.
 - **Revocable**: When an upper-layer event arrives, sovereignty can be immediately preempted and local state reset.
-- **Sandboxed**: States within the sovereignty scope are temporary and cannot be written to the World Causality Tree.
+- **Sandboxed**: The sovereignty window only produces conclusions, not processes. Process states naturally perish when the window closes; conclusions are uniformly written back after being adjudicated by the Local Causality layer.
 
 ---
 
 ## Deterministic Structure
 
-Delegated sovereignty can be interrupted by upper layers at any time.
+Temporary windows within Temporal Causal Sovereignty can be interrupted by upper layers at any time.
 
 When the player presses dodge, Local Causality determines whether the current state is uninterruptible (certain hard-recovery frames), and then decides whether to execute dodge rules. If executed, local state is reset and rendering components receive new state commands. The discarded animation frames were never causal facts to begin with; nothing is damaged.
 
