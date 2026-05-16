@@ -1,8 +1,8 @@
 # Demo: Interruptible Attack
 
-This example demonstrates the three core mechanisms of Dual-World Theory:
+This example demonstrates the three core mechanisms of Dual-World Design:
 
-- **Temporal Causal Sovereignty**: A temporary state window with a time limit
+- **Temporary State**: A temporary state window with a time limit
 - **Interruptibility**: When a new event arrives, the old window is atomically revoked
 - **Logic/Presentation Separation**: Damage determination is completely decoupled from animation playback
 
@@ -14,9 +14,9 @@ This example demonstrates the three core mechanisms of Dual-World Theory:
 
 ## Analysis
 
-1. Does this affect future causality? Yes, so it does not belong to the Presentation Layer.
-2. Further analysis: can it be interrupted by future events? Yes, so it is not pure Local Causality.
-3. Conclusion: a temporary window under Temporal Causal Sovereignty is needed to handle this attack and dodge event.
+1. Does this affect future game state? Yes, so it does not belong to the Presentation Layer.
+2. Further analysis: can it be interrupted by future events? Yes, so it is not pure Logic Layer state.
+3. Conclusion: a temporary state window is needed to handle this attack and dodge event.
 
 ## Code
 
@@ -30,7 +30,7 @@ type Event =
   | { type: 'input:dodge' };
 
 // ============================================
-// 2. Logic World (Local Causality layer)
+// 2. Logic Layer
 // ============================================
 const logic = {
   casting: null as string | null,
@@ -39,7 +39,7 @@ const logic = {
   reduce(e: Event) {
     switch (e.type) {
       case 'input:attack': {
-        // Grant new temporal sovereignty; old one is automatically preempted
+        // Create new temporary state; old one is automatically preempted
         const id = timelord.grant(2000, () => {
           // Window ends normally: transaction committed
           this.casting = null;
@@ -65,7 +65,7 @@ const logic = {
 };
 
 // ============================================
-// 3. Temporal Sovereignty Manager (internal mechanism of Local Causality)
+// 3. Temporary State Manager (internal mechanism of Logic Layer)
 // ============================================
 let _timelordId = 0;
 
@@ -73,7 +73,7 @@ const timelord = {
   active: null as { id: string; timer: any; commit: () => void; abort: () => void } | null,
 
   grant(ms: number, onCommit: () => void, onAbort: () => void) {
-    if (this.active) this.revoke(this.active.id, 'abort');  // Preempt old sovereignty
+    if (this.active) this.revoke(this.active.id, 'abort');  // Preempt old window
     const id = `window_${++_timelordId}`;
     this.active = {
       id,
@@ -94,7 +94,7 @@ const timelord = {
 };
 
 // ============================================
-// 4. Presentation World (Rendering component)
+// 4. Presentation Layer (Rendering component)
 // ============================================
 const renderer = {
   onEvent(e: Event) {
@@ -142,10 +142,10 @@ Scenario: Attack interrupted by dodge after 1 second
 
 | Code | Theory |
 |------|--------|
-| `Event` type | Input interface for **Game Causality** |
-| `logic.reduce()` | Rule deduction in **Local Causality layer** |
-| `timelord.grant/revoke` | Grant and preempt **Temporal Causal Sovereignty** |
-| `renderer.onEvent()` | **Presentation World** (Perceptual Sovereignty) |
+| `Event` type | Input interface for **Logic Events** |
+| `logic.reduce()` | Rule deduction in **Logic Layer** |
+| `timelord.grant/revoke` | Create and revoke **Temporary State** |
+| `renderer.onEvent()` | **Presentation Layer** |
 | `emit()` | Unidirectional data flow: logic drives presentation |
 
 ## Key Observations
