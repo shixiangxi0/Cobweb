@@ -29,7 +29,7 @@ The three layers of sovereignty in Dual-World Theory are structurally isomorphic
   The presentation layer only holds read permission for logic snapshots. How long an animation plays, whether it is forcibly interrupted, or even if the entire rendering layer crashes—none of these can affect the logic state in reverse. Multiple rendering components can read the same snapshot simultaneously, for the same reason Rust allows multiple `&T` to exist: read-only does not produce contention.
 
 * **Temporal Causal Sovereignty (lifetime `'a`)**
-  The time that Local Causality holds temporary states is bounded. When the window closes or is preempted by an upper layer, temporary states are directly destroyed without manual cleanup and leave no residue—completely corresponding to Rust's mechanism where variables are automatically dropped when they leave scope. The difference is that Rust's lifetimes are statically determined at compile time, while Temporal Causal Sovereignty windows are dynamically granted and revoked at runtime.
+  Local Causality grants temporary sub-sovereignty to handle continuous states (such as parry frames and combo windows). When the window closes or is preempted by an upper layer, temporary states are directly destroyed without manual cleanup and leave no residue. This is structurally analogous to Rust's lifetimes, with one key difference: Rust lifetimes are statically determined at compile time, while Temporal Causal Sovereignty windows are dynamically granted and revoked at runtime.
 
 ---
 

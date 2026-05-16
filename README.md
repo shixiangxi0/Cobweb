@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="README_EN.md">中文</a>
+  <a href="README_CN.md">中文</a>
 </p>
 
 <h2 align="center">An Event-Driven Game Engine Paradigm<br>for the AI Era</h2>
@@ -73,7 +73,7 @@ After separating the logic world from the presentation world, the latter faces a
 > **Presentation is not logic; the rendering layer holds presentation but not logic.**  
 > This is the cornerstone of Dual-World Theory.
 
-Rendering components are the smallest units of the presentation layer. Their essence is a **declarative state machine**: declaring what states it has, which transitions are valid, and which transitions need to be reported to the logic layer. `update(dt)` drives internal continuous animation for the state, but is not the core of the component. Rendering components are composable, nestable, and independently testable, and cannot privately modify the world state tree.
+Rendering components are the smallest units of the presentation layer. Their essence is a **declarative state machine**: declaring what states it has, which transitions are valid, and which transitions need to be reported to the logic layer. `update(dt)` drives internal continuous animation for the state, but is not the core of the component. Rendering components are composable, nestable, and independently testable, and cannot privately modify the Local Causality state.
 
 ---
 
@@ -105,10 +105,9 @@ Based on the nature of causality, the system's power is naturally divided into a
 graph TD
     A[World Causality Tree<br/>Persistence Layer · Cross-scene Shared]
     A -->|Grants Delegated Sovereignty| B[Local Causality / Scene<br/>Local Rules + Local State]
-    B -->|Writes Key Events Back| A
-    B -->|Produces Logic Primitives| C[Presentation Runtime / Rendering Component Tree<br/>Declarative State Machine · Component Autonomy]
+    B -->|Persists Key Facts| A
+    B -->|Outputs State Snapshots| C[Presentation Runtime / Rendering Component Tree<br/>Declarative State Machine · Component Autonomy]
     C -->|Reports Key Events| B
-    C -->|Reads Local Environment| B
 ```
 
 **Three-Layer Relationship:**

@@ -67,12 +67,14 @@ const logic = {
 // ============================================
 // 3. Temporal Sovereignty Manager (internal mechanism of Local Causality)
 // ============================================
+let _timelordId = 0;
+
 const timelord = {
   active: null as { id: string; timer: any; commit: () => void; abort: () => void } | null,
 
   grant(ms: number, onCommit: () => void, onAbort: () => void) {
     if (this.active) this.revoke(this.active.id, 'abort');  // Preempt old sovereignty
-    const id = `window_${Date.now()}`;
+    const id = `window_${++_timelordId}`;
     this.active = {
       id,
       commit: onCommit,
