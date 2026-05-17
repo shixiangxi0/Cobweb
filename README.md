@@ -87,7 +87,7 @@ Dual-World Design divides the system into two layers: the **Logic Layer** mainta
 
 The logic layer holds two things: the current world snapshot, and rule functions that process events. Each time an event arrives, rules run, state updates, and the change process is completely recorded. The presentation layer reads these results and presents discrete state changes as continuous audio-visual experiences.
 
-The boundary of responsibilities between the two layers can be judged by a single criterion: **does this affect future game state?** What affects it belongs to the Logic Layer; what doesn't belongs to the Presentation Layer. Character running, heavy rain, and flowing hair stay in the presentation layer; HP changes, equipment acquisition, and scene switching are reported to the logic layer as events.
+The boundary of responsibilities between the two layers can be judged by a single criterion: **does this change the game state?** What modifies data belongs to the Logic Layer; what merely produces view side-effects belongs to the Presentation Layer. Character running, heavy rain, and flowing hair stay in the presentation layer; HP changes, equipment acquisition, and scene switching are reported to the logic layer as events.
 
 ### State Layering
 
@@ -96,7 +96,7 @@ Based on the lifecycle of state, the system's data naturally divides into three 
 | Layer | Responsibility & Features |
 |-------|---------------------------|
 | **Persistent State** | Cross-scene save data. Maintains long-term data (character level, inventory, quest progress), does not participate in combat calculations. |
-| **Logic Layer / Scene** | The state deduction center for the current scene. All battle rules, event processing, and state changes happen here in absolute serial order. |
+| **Logic Layer / Scene** | The state deduction center for the current scene. All battle rules, event processing, and state changes happen here in absolute serial order. At the end of the scene, key data is written back to persistent state, and the rest is destroyed. |
 | **Presentation Layer** | A pure rendering component tree. Maps discrete state changes into parallel, continuous, multi-track sensory experiences. Holds no game state, can be rebuilt at any time. |
 
 ### Architecture Diagram
@@ -114,7 +114,7 @@ graph TD
 
 - **Persistent State** — Save layer, shared across scenes. Loaded at startup, saved at key moments, synchronized on exit.
 - **Logic Layer** — Can be understood as a Scene, the state deduction center for the current scene, corresponding to a rendering component tree.
-- **Presentation Layer** — Visualization of the logic layer, composed of a declarative rendering component tree. Each rendering component autonomously manages state, animation, and interaction.
+- **Presentation Layer** — Visualization of the logic layer, composed of a declarative rendering component tree. Each rendering component autonomously manages state, animation, and interaction, and can gracefully self-interrupt when behavior is interrupted.
 
 ---
 

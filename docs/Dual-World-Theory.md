@@ -6,9 +6,11 @@
 
 There exist two fundamentally different kinds of state changes in games.
 
-The first is **Logic State**. HP reduction, equipment acquisition, level progression—these events alter the future of the game. They are permanent writes to the world state. They are discrete, instantaneous, irreversible, and **absolutely serial** (similar to the single-threaded event-driven model of frontend JavaScript, where "simultaneity" in the physical world is forcibly queued).
+The first is **Logic State (Source of Truth)**. HP reduction, equipment acquisition, level progression—these events alter the future of the game by changing the game state. They are permanent writes to the world state. It consists of two parts:
+- **Sync Reducer**: Local pure-function computation, like a database transaction that instantly completes numerical updates. It is discrete, instantaneous, irreversible, and **absolutely serial** (similar to the single-threaded event-driven model of frontend JavaScript, where "simultaneity" in the physical world is forcibly queued).
+- **Async Coroutine / Saga**: An asynchronous container with a lifecycle (time sandbox), mounted on the Update time stream, used to digest time-consuming processes (such as a 3-second charge-up). At the instant this 3-second "process" ends, it submits a "sync reducer" instruction to the Reducer.
 
-The second is **Visual Effects**. Sword-swing animations, chase movements, particle effects—these state evolutions do not affect any future game state. They serve the present experience and vanish when ended. Unlike the "absolute seriality" of Logic State, Visual Effects are **continuous and parallel**. Because they hold and produce no state facts, there is naturally no state-write contention. Therefore, a scene can have countless animations, sound effects, and particle systems truly functioning "simultaneously." Discrete events forcibly queued within the same frame in the logic engine can elegantly unfold in the presentation layer as multi-track parallel visual presentations.
+The second is **Visual Effects (View Side-Effects)**. Sword-swing animations, chase movements, particle effects—these state evolutions do not affect any future game state. They serve the present experience and vanish when ended. Unlike the "absolute seriality" of Logic State, Visual Effects are **continuous and parallel**. Because they hold and produce no state facts, there is naturally no state-write contention. Therefore, a scene can have countless animations, sound effects, and particle systems truly functioning "simultaneously." Discrete events forcibly queued within the same frame in the logic engine can elegantly unfold in the presentation layer as multi-track parallel visual presentations.
 
 These two kinds of state changes operate on different axes (logic is discrete/serial, presentation is continuous/parallel) and are orthogonal in nature. The entirety of Dual-World Design proceeds from this distinction.
 
@@ -29,73 +31,6 @@ Presentation Layer → Rendering Component Tree (disposable, holds no state)
 **Logic Layer** is the state deduction center for the current scene. All state changes within the scene happen here. When the scene ends, important data is written back to Persistent State, and local state is destroyed entirely.
 
 **Presentation Layer** is the rendering component tree. It reads the output of the Logic Layer and presents discrete state changes as continuous experiences. It holds no persistent state, but it is not passive—this is the key to understanding Dual-World Design.
-
-### Architecture Diagram
-
-```mermaid
-graph TD
-    subgraph Input[Input Layer]
-        Player[Player Input]
-        Timer[System Timer]
-    end
-
-    Player -->|input:attack| Bus
-    Player -->|input:dodge| Bus
-    Timer -->|tick dt=16| Bus
-
-    Bus[Event Bus]
-    Bus --> Reduce
-
-    subgraph Logic[Logic Layer]
-        Reduce[reduce(state, event)]
-        State[(Scene State)]
-        Reduce <-->|read/update| State
-
-        subgraph TempWindow[Temporary State]
-            Create[Create: casting = {elapsed:0, duration:2000}]
-            Tick[tick advance: elapsed += dt]
-            Check{elapsed >= duration?}
-            Commit[Commit: resolve damage]
-            Abort[Abort: casting = null]
-            Destroy[Destroy: state cleanup]
-        end
-
-        State -->|mount| Create
-        Create --> Tick
-        Tick --> Check
-        Check -->|yes| Commit
-        Check -->|no| Tick
-        Commit --> Destroy
-        Abort --> Destroy
-        Bus -->|input:dodge| Abort
-        Bus -->|tick| Tick
-    end
-
-    State -->|write back on scene switch| Persistent[(Persistent State)]
-    Persistent -->|load on startup| State
-
-    State -->|copy| Snapshot[State Snapshot]
-
-    subgraph Presentation[Presentation Layer]
-        Snapshot --> Diff[snapshot diff]
-        Diff -->|change detection| AnimState[Animation State Machine]
-        AnimState -->|play| Anim[Animation/Particles]
-        AnimState -->|trigger| SFX[Sound/Screen Shake]
-    end
-
-    AnimState -->|hit confirmation| Bus
-
-    style Logic fill:#e1f5fe
-    style Presentation fill:#fff3e0
-    style Persistent fill:#f3e5f5
-    style TempWindow fill:#fff8e1
-```
-
-**Data Flow:**
-- **Event Flow** (solid): Input → Event Bus → reduce → state update
-- **Snapshot Flow** (dashed): State → Snapshot → Presentation diff → Animation
-- **Write-back Flow** (dotted): Logic Layer → Persistent State (on scene switch)
-- **Temporary State Lifecycle** (internal loop): Create → tick advance → check → commit/abort → destroy
 
 ---
 
@@ -150,7 +85,7 @@ In a declarative state machine, interruption is a forced transition:
 animating ──interrupt──> idle
 ```
 
-This edge is explicitly declared in the state graph; the transition is simply checking whether this edge exists—completely deterministic.
+When the presentation layer state is forcibly switched, rendering components must gracefully self-interrupt—the current animation cleanly finishes, then cuts to the new state, leaving no visual mess. This edge is explicitly declared in the state graph; the transition is simply checking whether this edge exists—completely deterministic.
 
 The system does not pursue deterministic *outcomes*, but **deterministic *structure***. Whether dodge succeeds is uncertain, but all possible outcomes are pre-enumerated, and every exit has a defined connection. What is uncertain is only which path is taken—not whether the path exists at all.
 
@@ -160,6 +95,6 @@ The system does not pursue deterministic *outcomes*, but **deterministic *struct
 
 When the three-layer structure lands in practice, it always returns to the same question:
 
-**Does this affect future game state?**
+**Does this change the game state?**
 
-If not, it belongs to rendering components: autonomous by default, disposable. If it affects deduction but is only valid within the current scene, it belongs to the Logic Layer: born and dies with the scene. If it affects cross-scene deduction, it belongs to Persistent State and must be saved.
+View side-effects that only provide visual feedback without producing write operations belong to rendering components: autonomous by default, disposable at any time. Those that trigger write operations but are only valid within the current scene (temporary combat sandbox, current local data) belong to the Logic Layer: born and dies with the scene. Core trusted data that affects cross-scene cycles belongs to Persistent State and must be persisted to disk.
