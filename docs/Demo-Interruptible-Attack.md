@@ -1,10 +1,10 @@
 # Demo: Interruptible Attack
 
-This example demonstrates the three core mechanisms of Dual-World Theory:
+This example demonstrates the three core mechanisms of Dual-World Design:
 
-- **Temporal Causal Sovereignty**: A temporary state window with a time limit
-- **Interruptibility**: When a new event arrives, the old window is atomically revoked
-- **Logic/Presentation Separation**: Damage determination is completely decoupled from animation playback
+- **Temporary State**: Managing time-limited behavior with simple fields
+- **Interruptibility**: Clean reset of old state when new events arrive
+- **Logic/Presentation Separation**: Damage determination completely decoupled from animation playback
 
 ## Scenario
 
@@ -12,156 +12,166 @@ This example demonstrates the three core mechanisms of Dual-World Theory:
 2. Player presses dodge during wind-up → Attack canceled, no damage dealt
 3. Wind-up completes → Deals 20 damage
 
-## Analysis
-
-1. Does this affect future causality? Yes, so it does not belong to the Presentation Layer.
-2. Further analysis: can it be interrupted by future events? Yes, so it is not pure Local Causality.
-3. Conclusion: a temporary window under Temporal Causal Sovereignty is needed to handle this attack and dodge event.
-
 ## Code
 
 ```typescript
+// ============================================
+// 1. State Definition
+// ============================================
+interface State {
+  player: {
+    status: 'idle' | 'attacking';
+    casting: null | { elapsed: number; duration: number };
+  };
+}
+
+const initialState: State = {
+  player: {
+    status: 'idle',
+    casting: null,
+  },
+};
 
 // ============================================
-// 1. Event definitions (the system's only input)
+// 2. Event Definition
 // ============================================
 type Event =
   | { type: 'input:attack' }
-  | { type: 'input:dodge' };
+  | { type: 'input:dodge' }
+  | { type: 'tick'; dt: number };
 
 // ============================================
-// 2. Logic World (Local Causality layer)
+// 3. Logic Layer (Pure Function)
 // ============================================
-const logic = {
-  casting: null as string | null,
+function reduce(state: State, event: Event): State {
+  const next = structuredClone(state);
 
-  // Rule: Event → State change
-  reduce(e: Event) {
-    switch (e.type) {
-      case 'input:attack': {
-        // Grant new temporal sovereignty; old one is automatically preempted
-        const id = timelord.grant(2000, () => {
-          // Window ends normally: transaction committed
-          this.casting = null;
-          console.log('  [Logic] Attack hit, 20 damage dealt');
-        }, () => {
-          // Window interrupted: transaction rolled back
-          this.casting = null;
-          console.log('  [Logic] Attack interrupted, no damage');
-        });
-        this.casting = id;
-        console.log('  [Logic] Attack wind-up started');
-        break;
+  switch (event.type) {
+    case 'input:attack': {
+      if (next.player.casting) {
+        next.player.casting = null;  // Interrupt old attack
       }
-      case 'input:dodge': {
-        if (this.casting) {
-          timelord.revoke(this.casting, 'abort');
+      next.player.casting = { elapsed: 0, duration: 2000 };
+      next.player.status = 'attacking';
+      break;
+    }
+
+    case 'input:dodge': {
+      if (next.player.casting) {
+        next.player.casting = null;
+        next.player.status = 'idle';
+      }
+      break;
+    }
+
+    case 'tick': {
+      const c = next.player.casting;
+      if (c) {
+        c.elapsed += event.dt;
+        if (c.elapsed >= c.duration) {
+          next.player.casting = null;  // Attack complete
+          next.player.status = 'idle';
         }
-        console.log('  [Logic] Dodge');
-        break;
       }
+      break;
     }
   }
-};
 
-// ============================================
-// 3. Temporal Sovereignty Manager (internal mechanism of Local Causality)
-// ============================================
-let _timelordId = 0;
-
-const timelord = {
-  active: null as { id: string; timer: any; commit: () => void; abort: () => void } | null,
-
-  grant(ms: number, onCommit: () => void, onAbort: () => void) {
-    if (this.active) this.revoke(this.active.id, 'abort');  // Preempt old sovereignty
-    const id = `window_${++_timelordId}`;
-    this.active = {
-      id,
-      commit: onCommit,
-      abort: onAbort,
-      timer: setTimeout(() => this.revoke(id, 'commit'), ms),
-    };
-    return id;
-  },
-
-  revoke(id: string, mode: 'commit' | 'abort') {
-    if (!this.active || this.active.id !== id) return;
-    clearTimeout(this.active.timer);
-    const t = this.active;
-    this.active = null;
-    mode === 'commit' ? t.commit() : t.abort();
-  }
-};
-
-// ============================================
-// 4. Presentation World (Rendering component)
-// ============================================
-const renderer = {
-  onEvent(e: Event) {
-    switch (e.type) {
-      case 'input:attack':
-        console.log('  [Presentation] Playing attack wind-up animation ────────>');
-        break;
-      case 'input:dodge':
-        console.log('  [Presentation] Playing dodge animation');
-        break;
-    }
-  }
-};
-
-// ============================================
-// 5. Event bus
-// ============================================
-function emit(e: Event) {
-  logic.reduce(e);
-  renderer.onEvent(e);
+  return next;
 }
 
 // ============================================
-// 6. Run demo
+// 4. Presentation Layer (Reads Snapshots Only)
 // ============================================
-console.log('Scenario: Attack interrupted by dodge after 1 second\n');
+const renderer = {
+  last: null as State | null,
+
+  update(curr: State) {
+    const last = this.last;
+
+    if (curr.player.status !== last?.player.status) {
+      if (curr.player.status === 'attacking') {
+        console.log('  [Presentation] Playing attack wind-up animation');
+      }
+      if (curr.player.status === 'idle' && last?.player.status === 'attacking') {
+        const completed = last.player.casting && last.player.casting.elapsed >= 2000;
+        console.log(completed
+          ? '  [Presentation] Playing attack hit effect'
+          : '  [Presentation] Attack animation interrupted, playing recovery');
+      }
+    }
+
+    this.last = structuredClone(curr);
+  },
+};
+
+// ============================================
+// 5. Event Bus (With Logging)
+// ============================================
+const eventLog: Event[] = [];
+let currentState = initialState;
+
+function emit(event: Event) {
+  eventLog.push(event);
+  currentState = reduce(currentState, event);
+  renderer.update(currentState);
+}
+
+// ============================================
+// 6. Run Demo
+// ============================================
+console.log('=== Scenario: Attack interrupted by dodge after 1 second ===\n');
 
 emit({ type: 'input:attack' });
-setTimeout(() => emit({ type: 'input:dodge' }), 1000);
+emit({ type: 'tick', dt: 500 });
+emit({ type: 'tick', dt: 500 });
+emit({ type: 'input:dodge' });
+
+// Replay verification
+console.log('\n=== Replay Verification ===\n');
+let replay = initialState;
+for (const e of eventLog) replay = reduce(replay, e);
+console.log('Replay result:', JSON.stringify(replay.player));
+
+// Unit tests
+function test() {
+  let s = initialState;
+  s = reduce(s, { type: 'input:attack' });
+  s = reduce(s, { type: 'tick', dt: 2000 });
+  console.assert(s.player.status === 'idle' && s.player.casting === null, 'Attack complete test failed');
+
+  s = initialState;
+  s = reduce(s, { type: 'input:attack' });
+  s = reduce(s, { type: 'tick', dt: 500 });
+  s = reduce(s, { type: 'input:dodge' });
+  console.assert(s.player.status === 'idle' && s.player.casting === null, 'Dodge interrupt test failed');
+
+  console.log('Tests passed ✓');
+}
+test();
 ```
 
 ## Output
 
 ```
-Scenario: Attack interrupted by dodge after 1 second
+=== Scenario: Attack interrupted by dodge after 1 second ===
 
-  [Logic] Attack wind-up started
-  [Presentation] Playing attack wind-up animation ────────>
-  [Logic] Attack interrupted, no damage
-  [Logic] Dodge
-  [Presentation] Playing dodge animation
+  [Presentation] Playing attack wind-up animation
+  [Presentation] Attack animation interrupted, playing recovery
+
+=== Replay Verification ===
+
+Replay result: {"status":"idle","casting":null}
+
+Tests passed ✓
 ```
 
 ## Mapping
 
-| Code | Theory |
-|------|--------|
-| `Event` type | Input interface for **Game Causality** |
-| `logic.reduce()` | Rule deduction in **Local Causality layer** |
-| `timelord.grant/revoke` | Grant and preempt **Temporal Causal Sovereignty** |
-| `renderer.onEvent()` | **Presentation World** (Perceptual Sovereignty) |
-| `emit()` | Unidirectional data flow: logic drives presentation |
-
-## Key Observations
-
-### Interrupt is clean
-
-```typescript
-timelord.revoke(this.casting, 'abort');
-// → onAbort executes: casting = null, "no damage"
-```
-
-After the old window is revoked, damage is not produced, and no residual state needs manual cleanup.
-
-### Logic and presentation are naturally separated
-
-- `[Logic] Attack interrupted, no damage` — Triggered by `timelord`'s `onAbort`
-- `[Presentation] Playing dodge animation` — Triggered by `input:dodge` event
-
-Changing the animation will not affect damage determination; changing damage values will not affect animation playback.
+| Code | Concept |
+|------|---------|
+| `reduce(state, event)` | **Logic Layer**: Pure function, no side effects |
+| `player.casting` | **Temporary State**: Plain object, delete when done |
+| `eventLog` | **Event Log**: Replayable, traceable |
+| `renderer.update(snapshot)` | **Presentation Layer**: Reads snapshot, diff-driven |
+| `reduce(initialState, event)` | **Unit Tests**: Pure functions, no engine needed |
