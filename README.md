@@ -47,7 +47,7 @@ engine.use({
   ],
 })
 
-State.emit('action:perform', { ... })      // Event causality drives rendering
+State.emit('action:perform', { ... })      // Event-driven rendering
 ```
 
 > Because the sole entry point for rules is events, every rule derivation has complete boundaries: from the root event trigger to the end of the state chain, all intermediate state changes are produced internally. This means **the entire game process is recordable, traceable, and globally perceivable by generative AI** — all natural products of this architecture.
@@ -73,7 +73,7 @@ After separating the logic world from the presentation world, the latter faces a
 > **Presentation is not logic; the rendering layer holds presentation but not logic.**  
 > This is the cornerstone of Cobweb.
 
-Rendering components are the smallest units of the presentation layer. Their essence is a **declarative state machine**: declaring what states it has, which transitions are valid, and which transitions need to be reported to the logic layer. `update(dt)` drives internal continuous animation for the state, but is not the core of the component. Rendering components are composable, nestable, and independently testable, and cannot privately modify the Local Causality state.
+Rendering components are the smallest units of the presentation layer. Their essence is a **declarative state machine**: declaring what states it has, which transitions are valid, and which transitions need to be reported to the logic layer. `update(dt)` drives internal continuous animation for the state, but is not the core of the component. Rendering components are composable, nestable, and independently testable, and cannot privately modify the Logic Layer state.
 
 ---
 
@@ -83,11 +83,11 @@ Rendering components are the smallest units of the presentation layer. Their ess
 >
 > The following is a core overview of Dual-World Design. For the complete derivation (Logic vs Presentation, State Layering, Rendering Component Autonomy, Temporary States, Deterministic Structure, Boundary Judgment), please read the full theory document linked above.
 
-Dual-World Design divides the system into two worlds: the **Logic World** maintains game state, and the **Presentation World** maintains continuous perception.
+Dual-World Design divides the system into two layers: the **Logic Layer** maintains game state, and the **Presentation Layer** maintains continuous perception.
 
 The logic layer holds two things: the current world snapshot, and rule functions that process events. Each time an event arrives, rules run, state updates, and the change process is completely recorded. The presentation layer reads these results and presents discrete state changes as continuous audio-visual experiences.
 
-The boundary of responsibilities between the two worlds can be judged by a single criterion: **does this affect future game state?** What affects it belongs to the Logic World; what doesn't belongs to the Presentation World. Character running, heavy rain, and flowing hair stay in the presentation layer; HP changes, equipment acquisition, and scene switching are reported to the logic layer as events.
+The boundary of responsibilities between the two layers can be judged by a single criterion: **does this affect future game state?** What affects it belongs to the Logic Layer; what doesn't belongs to the Presentation Layer. Character running, heavy rain, and flowing hair stay in the presentation layer; HP changes, equipment acquisition, and scene switching are reported to the logic layer as events.
 
 ### State Layering
 
@@ -114,7 +114,7 @@ graph TD
 
 - **Persistent State** — Save layer, shared across scenes. Loaded at startup, saved at key moments, synchronized on exit.
 - **Logic Layer** — Can be understood as a Scene, the state deduction center for the current scene, corresponding to a rendering component tree.
-- **Presentation World** — Visualization of the logic layer, composed of a declarative rendering component tree. Each rendering component autonomously manages state, animation, and interaction.
+- **Presentation Layer** — Visualization of the logic layer, composed of a declarative rendering component tree. Each rendering component autonomously manages state, animation, and interaction.
 
 ---
 
