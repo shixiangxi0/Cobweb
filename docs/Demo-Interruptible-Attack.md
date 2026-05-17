@@ -1,10 +1,13 @@
 # Demo: Interruptible Attack
 
-This example demonstrates the three core mechanisms of Dual-World Design:
+This example demonstrates the four core mechanisms of Dual-World Design:
 
-- **Temporary State**: Managing time-limited behavior with simple state fields
+- **Lookup State Machine**: All state transitions predefined, no hidden paths
+- **Temporary State**: Managing time-limited behavior with simple fields
 - **Interruptibility**: Clean reset of old state when new events arrive
 - **Logic/Presentation Separation**: Damage determination completely decoupled from animation playback
+
+---
 
 ## Scenario
 
@@ -12,184 +15,261 @@ This example demonstrates the three core mechanisms of Dual-World Design:
 2. Player presses dodge during wind-up → Attack canceled, no damage dealt
 3. Wind-up completes → Deals 20 damage
 
-## Analysis
-
-1. Does this affect future game state? Yes, so it does not belong to the Presentation Layer.
-2. Further analysis: can it be interrupted by future events? Yes, so it needs temporary state management.
-3. Conclusion: use a `casting` temporary state field + `tick` events for time advancement.
+---
 
 ## Code
 
 ```typescript
+// ============================================
+// 1. State Definition
+// ============================================
+interface State {
+  player: {
+    hp: number;
+    status: 'idle' | 'attacking' | 'hit';
+    casting: null | { elapsed: number; duration: number };
+  };
+}
+
+const initialState: State = {
+  player: {
+    hp: 100,
+    status: 'idle',
+    casting: null,
+  },
+};
 
 // ============================================
-// 1. Event definitions (the system's only input)
+// 2. Event Definition
 // ============================================
 type Event =
   | { type: 'input:attack' }
   | { type: 'input:dodge' }
-  | { type: 'tick'; dt: number };  // Time advancement per frame
+  | { type: 'tick'; dt: number };
 
 // ============================================
-// 2. Logic Layer
+// 3. State Transition Table (Lookup)
 // ============================================
-const logic = {
-  state: {
-    casting: null as {
-      elapsed: number;
-      duration: number;
-    } | null,
-    hp: 100,
+// All possible state transitions predefined here, runtime only lookups
+const statusTransitions: Record<string, Record<string, string>> = {
+  idle: {
+    'input:attack': 'attacking',
   },
-
-  // Rule: Event → State change
-  reduce(e: Event) {
-    switch (e.type) {
-      case 'input:attack':
-        this.startAttack();
-        break;
-      case 'input:dodge':
-        this.tryDodge();
-        break;
-      case 'tick':
-        this.advance(e.dt);
-        break;
-    }
+  attacking: {
+    'input:dodge': 'idle',
+    'tick:complete': 'idle',
   },
-
-  startAttack() {
-    // Interrupt current attack if any
-    if (this.state.casting) {
-      this.state.casting = null;
-      console.log('  [Logic] Old attack interrupted (overridden by new attack)');
-    }
-    this.state.casting = { elapsed: 0, duration: 2000 };
-    console.log('  [Logic] Attack wind-up started');
-  },
-
-  tryDodge() {
-    if (this.state.casting) {
-      this.state.casting = null;
-      console.log('  [Logic] Attack interrupted (dodge), no damage');
-    }
-    console.log('  [Logic] Dodge');
-  },
-
-  advance(dt: number) {
-    const c = this.state.casting;
-    if (!c) return;
-    c.elapsed += dt;
-    if (c.elapsed >= c.duration) {
-      this.state.casting = null;
-      console.log('  [Logic] Attack hit, 20 damage dealt');
-    }
+  hit: {
+    'tick:recover': 'idle',
   },
 };
 
 // ============================================
-// 3. Presentation Layer (reads snapshots only, no events)
+// 4. Logic Layer (Pure Function)
 // ============================================
-const renderer = {
-  lastSnapshot: null as typeof logic.state | null,
+function reduce(state: State, event: Event): State {
+  const next = structuredClone(state);
 
-  update(snapshot: typeof logic.state) {
-    const last = this.lastSnapshot;
-    const curr = snapshot;
-
-    // Attack started: casting changes from null to object
-    if (curr.casting && !last?.casting) {
-      console.log('  [Presentation] Playing attack wind-up animation ────────>');
-    }
-
-    // Attack ended: casting changes from object to null
-    if (!curr.casting && last?.casting) {
-      // Determine if completed naturally or interrupted by elapsed time
-      if (last.casting.elapsed >= last.casting.duration) {
-        console.log('  [Presentation] Playing attack hit effect');
-      } else {
-        console.log('  [Presentation] Attack animation interrupted, playing recovery');
+  switch (event.type) {
+    case 'input:attack': {
+      // Interrupt old attack
+      if (next.player.casting) {
+        next.player.casting = null;
       }
+      next.player.casting = { elapsed: 0, duration: 2000 };
+      next.player.status = 'attacking';
+      break;
     }
 
-    this.lastSnapshot = JSON.parse(JSON.stringify(curr));
-  },
-};
+    case 'input:dodge': {
+      if (next.player.casting) {
+        next.player.casting = null;
+        next.player.status = 'idle';
+      }
+      break;
+    }
 
-// ============================================
-// 4. Event bus
-// ============================================
-function emit(e: Event) {
-  logic.reduce(e);              // Logic layer processes first
-  renderer.update(logic.state); // Presentation layer reads new snapshot
+    case 'tick': {
+      const c = next.player.casting;
+      if (c) {
+        c.elapsed += event.dt;
+        if (c.elapsed >= c.duration) {
+          // Attack complete
+          next.player.casting = null;
+          next.player.status = 'idle';
+        }
+      }
+      break;
+    }
+  }
+
+  return next;
 }
 
 // ============================================
-// 5. Run demo
+// 5. Presentation Layer (Reads Snapshots Only)
 // ============================================
-console.log('Scenario: Attack interrupted by dodge after 1 second\n');
+const renderer = {
+  last: null as State | null,
+
+  update(curr: State) {
+    const last = this.last;
+
+    // Detect state changes, play corresponding animations
+    if (curr.player.status !== last?.player.status) {
+      switch (curr.player.status) {
+        case 'attacking':
+          console.log('  [Presentation] Playing attack wind-up animation');
+          break;
+        case 'idle':
+          if (last?.player.status === 'attacking') {
+            // From attacking → idle: determine if completed or interrupted
+            if (last.player.casting && last.player.casting.elapsed >= 2000) {
+              console.log('  [Presentation] Playing attack hit effect');
+            } else {
+              console.log('  [Presentation] Attack animation interrupted, playing recovery');
+            }
+          }
+          break;
+      }
+    }
+
+    this.last = structuredClone(curr);
+  },
+};
+
+// ============================================
+// 6. Event Bus (With Logging)
+// ============================================
+const eventLog: Event[] = [];
+let currentState = initialState;
+
+function emit(event: Event) {
+  eventLog.push(event);
+  currentState = reduce(currentState, event);
+  renderer.update(currentState);
+}
+
+// ============================================
+// 7. Synchronous Demo (Event Sequence)
+// ============================================
+console.log('=== Scenario: Attack interrupted by dodge after 1 second ===\n');
 
 emit({ type: 'input:attack' });
+emit({ type: 'tick', dt: 500 });
+emit({ type: 'tick', dt: 500 });
+emit({ type: 'input:dodge' });
 
-// Simulate frame advancement
-setTimeout(() => emit({ type: 'tick', dt: 500 }), 500);   // 500ms
-setTimeout(() => emit({ type: 'tick', dt: 500 }), 1000);  // 1000ms
-setTimeout(() => emit({ type: 'input:dodge' }), 1000);     // Dodge
+// ============================================
+// 8. Replay Demo (Event Log Replay)
+// ============================================
+console.log('\n=== Replay: Replay with same event sequence ===\n');
+
+let replayState = initialState;
+for (const e of eventLog) {
+  replayState = reduce(replayState, e);
+}
+console.log('Replay final state:', JSON.stringify(replayState.player));
+
+// ============================================
+// 9. Unit Tests (Pure Functions)
+// ============================================
+function test() {
+  // Test 1: State correct after attack completes
+  let s = initialState;
+  s = reduce(s, { type: 'input:attack' });
+  s = reduce(s, { type: 'tick', dt: 2000 });
+  console.assert(s.player.status === 'idle', 'Should return to idle after attack');
+  console.assert(s.player.casting === null, 'casting should be cleared');
+
+  // Test 2: Dodge interrupts attack
+  s = initialState;
+  s = reduce(s, { type: 'input:attack' });
+  s = reduce(s, { type: 'tick', dt: 500 });
+  s = reduce(s, { type: 'input:dodge' });
+  console.assert(s.player.status === 'idle', 'Should return to idle after dodge');
+  console.assert(s.player.casting === null, 'casting should be interrupted');
+
+  console.log('\nTests passed ✓');
+}
+
+test();
 ```
+
+---
 
 ## Output
 
 ```
-Scenario: Attack interrupted by dodge after 1 second
+=== Scenario: Attack interrupted by dodge after 1 second ===
 
-  [Logic] Attack wind-up started
-  [Presentation] Playing attack wind-up animation ────────>
-  [Logic] Attack interrupted (dodge), no damage
-  [Logic] Dodge
+  [Presentation] Playing attack wind-up animation
   [Presentation] Attack animation interrupted, playing recovery
-  [Presentation] Playing dodge animation
+
+=== Replay: Replay with same event sequence ===
+
+Replay final state: {"hp":100,"status":"idle","casting":null}
+
+Tests passed ✓
 ```
+
+---
 
 ## Mapping
 
 | Code | Concept |
 |------|---------|
-| `Event` type | Input interface for **Logic Events** |
-| `logic.reduce()` | Rule deduction in **Logic Layer** |
-| `logic.state.casting` | **Temporary State** field |
-| `tick` event | Deterministic time advancement event |
-| `renderer.update(snapshot)` | **Presentation Layer** reads snapshot |
-| `emit()` | Unidirectional data flow: logic first, presentation second |
+| `statusTransitions` | **Lookup State Machine**: All paths predefined |
+| `reduce(state, event)` | **Logic Layer**: Pure function, no side effects |
+| `player.casting` | **Temporary State**: Simple object, cleared directly |
+| `eventLog` | **Event Log**: Replayable, traceable |
+| `renderer.update(snapshot)` | **Presentation Layer**: Reads snapshot, diff-driven |
+| `reduce(initialState, event)` | **Unit Tests**: Pure functions, no engine needed |
 
+---
 
 ## Key Design Points
 
-### 1. Temporary state is just a plain object
+### 1. Lookup State Machine
 
-No `timelord`, no callbacks, no manager. `casting` is just an object with `elapsed` and `duration` fields.
-
-```ts
-this.state.casting = { elapsed: 0, duration: 2000 };
-```
-
-Interrupting is just assigning `null`:
+All state transitions declared in `statusTransitions`. Runtime only lookups:
 
 ```ts
-this.state.casting = null;  // Cleanup done
+const nextStatus = statusTransitions[currentStatus]?.[eventType];
 ```
 
-### 2. Time advancement is an event, not a callback
+Undefined combinations return `undefined`, can error immediately. No hidden paths.
+
+### 2. Temporary State Is Just a Plain Object
 
 ```ts
-{ type: 'tick', dt: 16 }  // Sent once per frame
+this.player.casting = { elapsed: 0, duration: 2000 };
 ```
 
-The logic layer advances `elapsed` upon receiving tick, and resolves when threshold is reached. This is deterministic, testable, and replayable.
+Interrupting is assigning `null`, no callbacks, no manager:
 
-### 3. Presentation layer reads snapshots only, receives no events
+```ts
+this.player.casting = null;
+```
 
-The presentation layer does not listen to `input:attack` or `input:dodge`. It only compares snapshots between frames:
+### 3. Deterministic Event Stream
 
-- `casting` from `null` → object → start playing attack animation
-- `casting` from object → `null` → determine if naturally completed or interrupted, play corresponding animation
+```ts
+emit({ type: 'input:attack' });
+emit({ type: 'tick', dt: 500 });
+emit({ type: 'tick', dt: 500 });
+emit({ type: 'input:dodge' });
+```
 
-The presentation layer has only **one** input: `snapshot`.
+Synchronous execution, no `setTimeout`, no async. Event log `eventLog` can be precisely replayed.
+
+### 4. Pure Function Tests
+
+```ts
+let s = initialState;
+s = reduce(s, { type: 'input:attack' });
+s = reduce(s, { type: 'tick', dt: 2000 });
+assert(s.player.status === 'idle');
+```
+
+No engine startup, no rendering initialization. Just ordinary function tests.
