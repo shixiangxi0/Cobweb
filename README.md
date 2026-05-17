@@ -62,7 +62,7 @@ State.emit('action:perform', { ... })      // Event-driven rendering
 |----------|----------|
 | **[Dual-World Design](docs/Dual-World-Theory.md)** | **Core architectural philosophy**. A complete derivation from "Logic vs Presentation" through state layering, rendering component autonomy, temporary states, and deterministic structure. |
 | **[How to Understand Dual-World Design](docs/How-to-Understand-Dual-World-Theory.md)** | **Developer paradigm shift**. Uses Rust's borrow checker, CQRS, and frontend state management as classical paradigms to answer how to map the theory to actual code. |
-| **[Demo: Interruptible Attack](docs/Demo-Interruptible-Attack.md)** | **Minimal code example**. 60 lines demonstrating temporary states, interruptibility, and logic/presentation separation. |
+| **[STS Reference](docs/STS-Reference.md)** | **Complete but concise**. A real STS combat system with bind + defs + match: cards, enemies, statuses, damage chain, turn loop. |
 
 ---
 
