@@ -30,6 +30,50 @@ Presentation Layer → Rendering Component Tree (disposable, holds no state)
 
 **Presentation Layer** is the rendering component tree. It reads the output of the Logic Layer and presents discrete state changes as continuous experiences. It holds no persistent state, but it is not passive—this is the key to understanding Dual-World Design.
 
+### Architecture Diagram
+
+```mermaid
+graph TD
+    Input[Input Layer]
+    Input -->|input:attack| Bus
+    Input -->|input:dodge| Bus
+    Input -->|tick dt=16| Bus
+
+    Bus[Event Bus]
+    Bus --> Reduce
+
+    subgraph Logic[Logic Layer]
+        Reduce[reduce(state, event)]
+        Reduce -->|update| State[(State)]
+        State -->|read| Reduce
+        State -->|temporary| Temp[casting / buffs<br/>time window state]
+        Temp -->|tick advance| Temp
+        Temp -->|expire/interrupt| Reduce
+    end
+
+    State -->|write back| Persistent[(Persistent State)]
+    Persistent -->|load| State
+
+    State -->|output| Snapshot[State Snapshot]
+
+    subgraph Presentation[Presentation Layer]
+        Snapshot --> Diff[snapshot diff]
+        Diff -->|changes| Anim[Animation State Machine]
+        Anim -->|play| VFX[Effects / Audio]
+    end
+
+    Anim -->|report key events| Bus
+
+    style Logic fill:#e1f5fe
+    style Presentation fill:#fff3e0
+    style Persistent fill:#f3e5f5
+```
+
+**Data Flow:**
+- **Event Flow** (solid): Input → Event Bus → reduce → state update
+- **Snapshot Flow** (dashed): State → Snapshot → Presentation diff → Animation
+- **Write-back Flow** (dotted): Logic Layer → Persistent State (on scene switch)
+
 ---
 
 ## Rendering Component Autonomy
