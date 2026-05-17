@@ -34,45 +34,68 @@ Presentation Layer → Rendering Component Tree (disposable, holds no state)
 
 ```mermaid
 graph TD
-    Input[Input Layer]
-    Input -->|input:attack| Bus
-    Input -->|input:dodge| Bus
-    Input -->|tick dt=16| Bus
+    subgraph Input[Input Layer]
+        Player[Player Input]
+        Timer[System Timer]
+    end
+
+    Player -->|input:attack| Bus
+    Player -->|input:dodge| Bus
+    Timer -->|tick dt=16| Bus
 
     Bus[Event Bus]
     Bus --> Reduce
 
     subgraph Logic[Logic Layer]
         Reduce[reduce(state, event)]
-        Reduce -->|update| State[(State)]
-        State -->|read| Reduce
-        State -->|temporary| Temp[casting / buffs<br/>time window state]
-        Temp -->|tick advance| Temp
-        Temp -->|expire/interrupt| Reduce
+        State[(Scene State)]
+        Reduce <-->|read/update| State
+
+        subgraph TempWindow[Temporary State]
+            Create[Create: casting = {elapsed:0, duration:2000}]
+            Tick[tick advance: elapsed += dt]
+            Check{elapsed >= duration?}
+            Commit[Commit: resolve damage]
+            Abort[Abort: casting = null]
+            Destroy[Destroy: state cleanup]
+        end
+
+        State -->|mount| Create
+        Create --> Tick
+        Tick --> Check
+        Check -->|yes| Commit
+        Check -->|no| Tick
+        Commit --> Destroy
+        Abort --> Destroy
+        Bus -->|input:dodge| Abort
+        Bus -->|tick| Tick
     end
 
-    State -->|write back| Persistent[(Persistent State)]
-    Persistent -->|load| State
+    State -->|write back on scene switch| Persistent[(Persistent State)]
+    Persistent -->|load on startup| State
 
-    State -->|output| Snapshot[State Snapshot]
+    State -->|copy| Snapshot[State Snapshot]
 
     subgraph Presentation[Presentation Layer]
         Snapshot --> Diff[snapshot diff]
-        Diff -->|changes| Anim[Animation State Machine]
-        Anim -->|play| VFX[Effects / Audio]
+        Diff -->|change detection| AnimState[Animation State Machine]
+        AnimState -->|play| Anim[Animation/Particles]
+        AnimState -->|trigger| SFX[Sound/Screen Shake]
     end
 
-    Anim -->|report key events| Bus
+    AnimState -->|hit confirmation| Bus
 
     style Logic fill:#e1f5fe
     style Presentation fill:#fff3e0
     style Persistent fill:#f3e5f5
+    style TempWindow fill:#fff8e1
 ```
 
 **Data Flow:**
 - **Event Flow** (solid): Input → Event Bus → reduce → state update
 - **Snapshot Flow** (dashed): State → Snapshot → Presentation diff → Animation
 - **Write-back Flow** (dotted): Logic Layer → Persistent State (on scene switch)
+- **Temporary State Lifecycle** (internal loop): Create → tick advance → check → commit/abort → destroy
 
 ---
 
