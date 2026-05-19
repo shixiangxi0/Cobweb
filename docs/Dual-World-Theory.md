@@ -1,5 +1,7 @@
 # Dual-World Design
 
+![Dual-World Architecture](../asset/dual_world_architecture_en.svg)
+
 ---
 
 ## Two Kinds of State Changes

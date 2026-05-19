@@ -101,14 +101,7 @@ Based on the lifecycle of state, the system's data naturally divides into three 
 
 ### Architecture Diagram
 
-```mermaid
-graph TD
-    A[Persistent State<br/>Save Layer · Cross-scene Shared]
-    A -->|Load/Save| B[Logic Layer / Scene<br/>Rule Deduction + Scene State]
-    B -->|Writes Key Data| A
-    B -->|Outputs State Snapshots| C[Presentation Layer / Rendering Component Tree<br/>Declarative State Machine · Component Autonomy]
-    C -->|Reports Key Events| B
-```
+![Dual-World Architecture](asset/dual_world_architecture_en.svg)
 
 **Three-Layer Relationship:**
 

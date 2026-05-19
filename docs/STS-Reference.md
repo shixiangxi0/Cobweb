@@ -45,10 +45,6 @@ defaultMatchByKind: {
 }
 ```
 
-这意味着：
-- `strike` 卡的 `event:card:effect` hook **只会在 instanceId='c1' 时触发**
-- `strength` 状态的 `event:entity:attack` hook **只会在 source='player' 时触发**（如果绑定在 player 上）
-
 ---
 
 ## 规则文件

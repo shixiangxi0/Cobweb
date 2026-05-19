@@ -102,14 +102,7 @@ State.emit('action:perform', { ... })      // 事件驱动渲染
 
 ### 架构图
 
-```mermaid
-graph TD
-    A[持久状态<br/>存档层 · 跨场景共享]
-    A -->|加载/保存| B[逻辑层 / Scene<br/>规则推演 + 场景状态]
-    B -->|关键数据写回| A
-    B -->|输出状态快照| C[表现层 / 渲染组件树<br/>声明式状态机 · 组件自治]
-    C -->|上报关键事件| B
-```
+![双世界架构](asset/dual_world_architecture.svg)
 
 **三层关系：**
 
