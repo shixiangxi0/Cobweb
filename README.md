@@ -62,7 +62,7 @@ State.emit('action:perform', { ... })      // Event-driven rendering
 |----------|----------|
 | **[Dual-World Design](docs/Dual-World-Theory.md)** | **Core architectural philosophy**. A complete derivation from "Logic vs Presentation" through state layering, rendering component autonomy, temporary states, and deterministic structure. |
 | **[How to Understand Dual-World Design](docs/How-to-Understand-Dual-World-Theory.md)** | **Developer paradigm shift**. Uses Rust's borrow checker, CQRS, and frontend state management as classical paradigms to answer how to map the theory to actual code. |
-| **[Demo: Interruptible Attack](docs/Demo-Interruptible-Attack.md)** | **Minimal code example**. 60 lines demonstrating temporary states, interruptibility, and logic/presentation separation. |
+| **[FAQ](docs/FAQ.md)** | **Common questions answered**. Detailed explanations of event-driven vs frame-driven, ECS comparison, performance concerns, and other core confusions. |
 
 ---
 
@@ -101,14 +101,7 @@ Based on the lifecycle of state, the system's data naturally divides into three 
 
 ### Architecture Diagram
 
-```mermaid
-graph TD
-    A[Persistent State<br/>Save Layer · Cross-scene Shared]
-    A -->|Load/Save| B[Logic Layer / Scene<br/>Rule Deduction + Scene State]
-    B -->|Writes Key Data| A
-    B -->|Outputs State Snapshots| C[Presentation Layer / Rendering Component Tree<br/>Declarative State Machine · Component Autonomy]
-    C -->|Reports Key Events| B
-```
+![Dual-World Architecture](asset/dual_world_architecture_en.svg)
 
 **Three-Layer Relationship:**
 

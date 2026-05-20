@@ -1,2 +1,0 @@
-# STS-Reference
-

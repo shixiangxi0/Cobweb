@@ -1,16 +1,18 @@
 # Dual-World Design
 
+![Dual-World Architecture](../asset/dual_world_architecture_en.svg)
+
 ---
 
 ## Two Kinds of State Changes
 
 There exist two fundamentally different kinds of state changes in games.
 
-The first is **Logic State (Source of Truth)**. HP reduction, equipment acquisition, level progression—these events alter the future of the game by changing the game state. They are permanent writes to the world state. It consists of two parts:
-- **Sync Reducer**: Local pure-function computation, like a database transaction that instantly completes numerical updates. It is discrete, instantaneous, irreversible, and **absolutely serial** (similar to the single-threaded event-driven model of frontend JavaScript, where "simultaneity" in the physical world is forcibly queued).
-- **Async Coroutine / Saga**: An asynchronous container with a lifecycle (time sandbox), mounted on the Update time stream, used to digest time-consuming processes (such as a 3-second charge-up). At the instant this 3-second "process" ends, it submits a "sync reducer" instruction to the Reducer.
+The first is **Core State**. HP reduction, equipment acquisition, level progression—these events alter the future of the game by changing the game state. They are permanent writes to the world state. It consists of two parts:
+- **Instant Resolution**: Local pure-function computation, like a database transaction that instantly completes numerical updates. It is discrete, instantaneous, irreversible, and **absolutely serial** (similar to the single-threaded event-driven model of frontend JavaScript, where "simultaneity" in the physical world is forcibly queued).
+- **Process Resolution**: An asynchronous container with a lifecycle (time sandbox), mounted on the Update time stream, used to digest time-consuming processes (such as a 3-second charge-up). At the instant this 3-second "process" ends, it submits an "instant resolution" instruction to the resolver.
 
-The second is **Visual Effects (View Side-Effects)**. Sword-swing animations, chase movements, particle effects—these state evolutions do not affect any future game state. They serve the present experience and vanish when ended. Unlike the "absolute seriality" of Logic State, Visual Effects are **continuous and parallel**. Because they hold and produce no state facts, there is naturally no state-write contention. Therefore, a scene can have countless animations, sound effects, and particle systems truly functioning "simultaneously." Discrete events forcibly queued within the same frame in the logic engine can elegantly unfold in the presentation layer as multi-track parallel visual presentations.
+The second is **Visual Presentation**. Sword-swing animations, chase movements, particle effects—these state evolutions do not affect any future game state. They serve the present experience and vanish when ended. Unlike the "absolute seriality" of Logic State, Visual Effects are **continuous and parallel**. Because they hold and produce no state facts, there is naturally no state-write contention. Therefore, a scene can have countless animations, sound effects, and particle systems truly functioning "simultaneously." Discrete events forcibly queued within the same frame in the logic engine can elegantly unfold in the presentation layer as multi-track parallel visual presentations.
 
 These two kinds of state changes operate on different axes (logic is discrete/serial, presentation is continuous/parallel) and are orthogonal in nature. The entirety of Dual-World Design proceeds from this distinction.
 
