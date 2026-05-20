@@ -44,7 +44,7 @@ To understand the subtlety of this isolation, consider **modern frontend compone
 * **核心校验 Global Store（单向数据流）**:
   No matter what a rendering component independently calculates internally, as long as it does not throw (Dispatch) a key event upward, it will not affect the state direction of the business. Only when the rendering component detects and confirms substantive contact does it fire a discrete safe payload (Event Payload) to the Logic Layer.
 
-This separation of powers isolates high-frequency, continuous, noise-filled "perceptual simulation" at the periphery, ensuring the purity of the core engine (Reducer) and the absolute determinism of deduction.
+This separation of powers isolates high-frequency, continuous, noise-filled "perceptual simulation" at the periphery, ensuring the purity of the core engine (resolver) and the absolute determinism of deduction.
 
 > ⚠️ Generally, developers first encountering the Dual-World architecture tend to treat all player input as processing from the presentation layer to the Logic Layer. This is wrong. You must map each player input to its associated three-layer structure at the design stage: if it belongs to rendering components, it is autonomous by default and disposable. If it affects deduction but is only valid within the current scene, it belongs to the Logic Layer, born and dying with the scene. If it affects cross-scene deduction, it belongs to Persistent State and must be saved.
 
