@@ -20,6 +20,10 @@ Modern game engines typically adopt `Game Loop` as the top-level design. Input c
 
 It views a game first and foremost as a **deterministic state machine**: player inputs, rule triggers, phase transitions, and numerical changes are all essentially definable and verifiable state transitions. Logic and presentation must be loosely coupled; the Game Loop still exists, but primarily serves the presentation world, while the entire game is driven forward in units of events that produce state changes.
 
+**It advocates abandoning the decades-old "What You See Is What You Get" engineering paradigm in game development, and establishing a system that is fully perceivable, computable, and automatable by generative AI:** define computable event rules first, then assemble rendering components. The essence of a game is a deterministic state machine; the Logic Layer becomes the sole authority, and the Presentation Layer retreats into a replaceable projection.
+
+Under this architecture, the Logic Layer defines all macro discrete events (attack, acquire equipment, complete quest), and dispatches state changes to the Presentation Layer. The Presentation Layer is responsible for orchestrating these discrete changes into continuous audio-visual experiences — character models, health bars, and effect systems are all composable, nestable, decomposable, and independently testable rendering components, just like modern frontend UI libraries.
+
 ### Architectural Code Comparison
 
 **Traditional Game Loop: Frame-based**
@@ -98,7 +102,7 @@ Based on the lifecycle of state, the system's data naturally divides into three 
 |-------|---------------------------|
 | **Persistent State** | Cross-scene save data. Maintains long-term data (character level, inventory, quest progress), does not participate in combat calculations. |
 | **Logic Layer / Scene** | The state deduction center for the current scene. All battle rules, event processing, and state changes happen here in absolute serial order. At the end of the scene, key data is written back to persistent state, and the rest is destroyed. |
-| **Presentation Layer** | A pure rendering component tree. Maps discrete state changes into parallel, continuous, multi-track sensory experiences. Holds no game state, can be rebuilt at any time. |
+| **Presentation Layer / Rendering Component Tree** | A pure rendering component tree. Maps discrete state changes into parallel, continuous, multi-track sensory experiences. Holds no game state, can be rebuilt at any time. |
 
 ### Architecture Diagram
 
@@ -112,10 +116,12 @@ Based on the lifecycle of state, the system's data naturally divides into three 
 
 ---
 
-## Quick Start
+## A Slay the Spire Verification Demo
+
+In Cobweb's implementation of Slay the Spire, logic and rendering are strongly separated. AI can easily create and modify game rules at the Logic Layer. Even for very complex event descriptions — such as a chain of multiple triggers, damage amplification, damage reduction, revenge, and deathrattle — AI handles them accurately. The Logic Layer knows nothing of the Presentation Layer's existence, meaning multiple different visual representations can coexist.
 
 ```bash
-# Install dependencies
+git clone https://github.com/shixiangxi0/Cobweb.git
 pnpm install
 ```
 
