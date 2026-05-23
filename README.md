@@ -63,6 +63,7 @@ State.emit('action:perform', { ... })      // Event-driven rendering
 | **[Dual-World Design](docs/Dual-World-Theory.md)** | **Core architectural philosophy**. A complete derivation from "Logic vs Presentation" through state layering, rendering component autonomy, temporary states, and deterministic structure. |
 | **[How to Understand Dual-World Design](docs/How-to-Understand-Dual-World-Theory.md)** | **Developer paradigm shift**. Uses Rust's borrow checker, CQRS, and frontend state management as classical paradigms to answer how to map the theory to actual code. |
 | **[FAQ](docs/FAQ.md)** | **Common questions answered**. Detailed explanations of event-driven vs frame-driven, ECS comparison, performance concerns, and other core confusions. |
+| **[Causal World and Case Studies](docs/Causal-World-and-Case-Studies.md)** | **Developer operations manual**. The three questions every mechanism must answer before implementation, complete decision trees with demonstrations, and analysis of common misattributions. |
 
 ---
 
