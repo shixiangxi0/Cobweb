@@ -41,7 +41,7 @@ To understand the subtlety of this isolation, consider **modern frontend compone
 
 * **Local State of Presentation Components (Local Simulation Autonomy)**:
   In frontend architecture, we would never put "the intermediate value of a dropdown expansion animation" or "a button's hover gradient" into an application-level Redux Store. By the same token, rendering components can internally maintain highly complex physical displacement simulations and pathfinding interpolation (this is their Local UI State) to ensure screen responsiveness. But these computations are strictly confined to the visual presentation layer and do not serve as the truth of the world.
-* **核心校验 Global Store（单向数据流）**:
+* **Core Validation via Global Store (Unidirectional Data Flow)**:
   No matter what a rendering component independently calculates internally, as long as it does not throw (Dispatch) a key event upward, it will not affect the state direction of the business. Only when the rendering component detects and confirms substantive contact does it fire a discrete safe payload (Event Payload) to the Logic Layer.
 
 This separation of powers isolates high-frequency, continuous, noise-filled "perceptual simulation" at the periphery, ensuring the purity of the core engine (resolver) and the absolute determinism of deduction.

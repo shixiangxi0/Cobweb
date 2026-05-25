@@ -110,7 +110,7 @@ This means rendering components are not spectators of propagation, but **one of 
 
 Chain propagation gives game mechanisms true combinatorial power.
 
-Revenge, deathrattle, counterattack, hit-stacking, death summons, kill-heal, and relic damage amplification—these effects do not need to be pieced together into a fixed process in advance. They can exist independently,接入 at appropriate event points, and ultimately be connected by the propagation chain.
+Revenge, deathrattle, counterattack, hit-stacking, death summons, kill-heal, and relic damage amplification—these effects do not need to be pieced together into a fixed process in advance. They can exist independently, hook in at appropriate event points, and ultimately be connected by the propagation chain.
 
 The more complex the mechanism, the more important this combinatorial ability becomes. Because developers no longer need to maintain a constantly expanding central process, but rather maintain an extensible rule graph.
 
