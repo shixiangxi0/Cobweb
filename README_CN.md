@@ -6,7 +6,7 @@
   <a href="README.md">English</a>
 </p>
 
-<h2 align="center">AI时代，一种基于事件驱动的游戏引擎范式</h2>
+<h2 align="center">AI时代，一种基于事件驱动的游戏状态引擎</h2>
 
 ## 设计思想
 

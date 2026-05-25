@@ -6,7 +6,7 @@
   <a href="README_CN.md">中文</a>
 </p>
 
-<h2 align="center">An Event-Driven Game Engine Paradigm<br>for the AI Era</h2>
+<h2 align="center">An Event-Driven Game State Engine<br>for the AI Era</h2>
 
 
 

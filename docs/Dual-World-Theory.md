@@ -65,7 +65,11 @@ Continuous games raise a deeper question: ACT combo windows, parry frames, real-
 
 This requires a mechanism for **Temporary States**.
 
-**Temporary States are internal states managed by the Logic Layer within a time window.** Within the window, the Logic Layer can continuously read and write temporary states, execute frame-level rules, and run physics simulation. Parry frames and combo windows are internal states of the Logic Layer, managed under Temporary States—they should not belong to rendering components. If placed in rendering components, interruption would trigger race conditions. They must be managed through layered governance so that interruption and revocation are merely clean local state resets.
+**Temporary States are the asynchronous input channels of the Logic Layer**: they run continuously within a time window and submit a conclusion to the Reducer when the window ends. This is the only way the Logic Layer digests "time-consuming processes." The "Process Resolution" mentioned above is implemented via Temporary State windows.
+
+From an engineering perspective, this can be viewed as **structured concurrency**.
+
+Temporary States belong to the Logic Layer, not to rendering components. Parry frames and combo windows are internal states of the Logic Layer, managed under Temporary States. If placed in rendering components, interruptions would trigger race conditions. Therefore, they must be managed through layered governance: interruption and revocation must merely be a clean state reset in the Logic Layer. The rendering component is only responsible for receiving new instructions and never participates in making logic adjudications.
 
 Temporary States have three core properties:
 
