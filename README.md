@@ -62,6 +62,8 @@ State.emit('action:perform', { ... })      // Event-driven rendering
 
 > Understanding Cobweb is not about the code, but about the **event-driven architecture** paradigm it establishes.
 
+- Online notes: [https://notes.shixiangxi.com/](https://notes.shixiangxi.com/)
+
 | Document | Why Read |
 |----------|----------|
 | **[Dual-World Design](docs/Dual-World-Theory.md)** | **Core architectural philosophy**. A complete derivation from "Logic vs Presentation" through state layering, rendering component autonomy, temporary states, and deterministic structure. |
